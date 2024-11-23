@@ -5,4 +5,4 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-[assembly: SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "This is for Windows", Scope = "member", Target = "~M:SimpletextingAPI.Program.Main(System.String[])")]
+[assembly: SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "This is for Windows")]
