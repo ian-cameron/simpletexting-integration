@@ -74,10 +74,10 @@ List<User> usersToUpsert = adUsers
           ).ToList();
 
 // Add users to office
-usersToUpsert.ForEach(user => { user.ListIds = allUserListIds.Union(lists.Where(l => l.Name == user.Office).Select(l => l.Id)).ToList(); });
+usersToUpsert.ForEach(user => { user.ListIds = allUserListIds.Union(lists.Where(l => l.Name == user.Office).Select(l => l.ListId)).ToList(); });
 
 // API Users with phone numbers not found in AD
-List<User> usersRemoved = apiUsers.Where(api => !apiUsers.Any(ad => ad.ContactPhone == api.ContactPhone)).ToList();
+List<User> usersRemoved = apiUsers.Where(api => !adUsers.Any(ad => ad.ContactPhone == api.ContactPhone)).ToList();
 
 // Print AD users
 Console.WriteLine("Active Directory Users:");

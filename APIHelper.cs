@@ -12,10 +12,9 @@ namespace SimpletextingAPI.Services
 {
     public static class ApiHelper
     {
-        public static async Task<List<User>> FetchApiUsers(string apiKey)
+        private static async Task<List<TItem>> FetchPaginatedApiData<TResponse, TItem>(string apiKey, string baseUrl, Func<TResponse, List<TItem>> getContent) where TResponse : class
         {
-            List<User> apiUsers = new List<User>();
-            string url = "https://api-app2.simpletexting.com/v2/api/contacts?page=0&size=100&since=1989-12-13T23:20:08.489Z";
+            var results = new List<TItem>();
 
             using (HttpClient client = new HttpClient())
             {
@@ -28,19 +27,22 @@ namespace SimpletextingAPI.Services
                 {
                     try
                     {
-                        var response = await client.GetAsync(url.Replace("page=0", $"page={page}"));
+                        string pageUrl = baseUrl.Replace("page=0", $"page={page}");
+                        var response = await client.GetAsync(pageUrl);
+
                         if (response.IsSuccessStatusCode)
                         {
                             var jsonResponse = await response.Content.ReadAsStringAsync();
-                            var apiResponse = JsonSerializer.Deserialize<UserApiResponse>(jsonResponse, new JsonSerializerOptions
+                            var apiResponse = JsonSerializer.Deserialize<TResponse>(jsonResponse, new JsonSerializerOptions
                             {
                                 PropertyNameCaseInsensitive = true
                             });
-                            var contacts = apiResponse?.Content;
-                            if (contacts != null && contacts.Count > 0)
+
+                            var items = getContent(apiResponse);
+                            if (items != null && items.Count > 0)
                             {
-                                apiUsers.AddRange(contacts); // Add all contacts to apiUsers
-                                moreResults = contacts.Count == 100; // Check if we received the maximum size
+                                results.AddRange(items);
+                                moreResults = items.Count == 100; // Assuming 100 is the page size
                             }
                             else
                             {
@@ -50,93 +52,48 @@ namespace SimpletextingAPI.Services
                         else
                         {
                             Console.WriteLine($"API request failed: {response.ReasonPhrase}");
-                            moreResults = false; // Stop fetching if there is a failure
+                            moreResults = false;
                         }
                     }
                     catch (HttpRequestException httpEx)
                     {
                         Console.WriteLine($"HTTP request error: {httpEx.Message}");
-                        moreResults = false; // Stop fetching on HTTP error
+                        moreResults = false;
                     }
                     catch (JsonException jsonEx)
                     {
                         Console.WriteLine($"JSON deserialization error: {jsonEx.Message}");
-                        moreResults = false; // Stop fetching on JSON error
+                        moreResults = false;
                     }
                     catch (Exception ex)
                     {
                         Console.WriteLine($"An unexpected error occurred: {ex.Message}");
-                        moreResults = false; // Stop fetching on unexpected error
+                        moreResults = false;
                     }
 
                     page++;
                 }
             }
 
-            return apiUsers;
+            return results;
         }
-        public static async Task<List<ContactList>> FetchApiContactLists(string apiKey)
+
+        public static Task<List<User>> FetchApiUsers(string apiKey)
         {
-            List<ContactList> contactLists = new List<ContactList>();
+            string url = "https://api-app2.simpletexting.com/v2/api/contacts?page=0&size=100";
+            return FetchPaginatedApiData<UserApiResponse, User>(
+                apiKey,
+                url,
+                response => response?.Content);
+        }
+
+        public static Task<List<ContactList>> FetchApiContactLists(string apiKey)
+        {
             string url = "https://api-app2.simpletexting.com/v2/api/contact-lists?page=0&size=100";
-
-            using (HttpClient client = new HttpClient())
-            {
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
-
-                int page = 0;
-                bool moreResults = true;
-
-                while (moreResults)
-                {
-                    try
-                    {
-                        var response = await client.GetAsync(url.Replace("page=0", $"page={page}"));
-                        if (response.IsSuccessStatusCode)
-                        {
-                            var jsonResponse = await response.Content.ReadAsStringAsync();
-                            var apiResponse = JsonSerializer.Deserialize<ListApiResponse>(jsonResponse, new JsonSerializerOptions
-                            {
-                                PropertyNameCaseInsensitive = true
-                            });
-                            var lists = apiResponse?.Content;
-                            if (lists != null && lists.Count > 0)
-                            {
-                                contactLists.AddRange(lists); // Add all lists to contactLists
-                                moreResults = lists.Count == 100; // Check if we received the maximum size
-                            }
-                            else
-                            {
-                                moreResults = false;
-                            }
-                        }
-                        else
-                        {
-                            Console.WriteLine($"API request failed: {response.ReasonPhrase}");
-                            moreResults = false; // Stop fetching if there is a failure
-                        }
-                    }
-                    catch (HttpRequestException httpEx)
-                    {
-                        Console.WriteLine($"HTTP request error: {httpEx.Message}");
-                        moreResults = false; // Stop fetching on HTTP error
-                    }
-                    catch (JsonException jsonEx)
-                    {
-                        Console.WriteLine($"JSON deserialization error: {jsonEx.Message}");
-                        moreResults = false; // Stop fetching on JSON error
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"An unexpected error occurred: {ex.Message}");
-                        moreResults = false; // Stop fetching on unexpected error
-                    }
-
-                    page++;
-                }
-            }
-
-            return contactLists;
+            return FetchPaginatedApiData<ListApiResponse, ContactList>(
+                apiKey,
+                url,
+                response => response?.Content);
         }
         public static async Task RemoveUsers(string apiKey, List<User> users)
         {

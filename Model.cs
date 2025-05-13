@@ -1,3 +1,5 @@
+using System.Xml.Linq;
+
 namespace SimpletextingAPI.Models {
      public class User
      {
@@ -12,7 +14,12 @@ namespace SimpletextingAPI.Models {
 
     public class ContactList
     {
-        public required string Id { get; set; }
+        private string? _listId;
+        public string? ListId {
+            get { return _listId ?? Id; }
+            set { _listId = value; }
+        }
+        public string? Id { get; set; }
         public required string Name { get; set; }
     }
 
