@@ -9,7 +9,7 @@ namespace SimpletextingAPI.Models {
 
     public class ApiResponse
     {
-        public List<User>? Contacts { get; set; }
+        public List<User>? Content { get; set; }
         public int TotalPages { get; set; }
         public long TotalElements { get; set; }
     }

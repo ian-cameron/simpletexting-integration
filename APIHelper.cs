@@ -15,7 +15,7 @@ namespace SimpletextingAPI.Services
         public static async Task<List<User>> FetchApiUsers(string apiKey)
         {
             List<User> apiUsers = new List<User>();
-            string url = "https://api-app2.simpletexting.com/v2/api/contacts?page=0&size=100&since=1989-12-13";
+            string url = "https://api-app2.simpletexting.com/v2/api/contacts?page=0&size=100&since=1989-12-13T23:20:08.489Z";
 
             using (HttpClient client = new HttpClient())
             {
@@ -33,11 +33,11 @@ namespace SimpletextingAPI.Services
                         {
                             var jsonResponse = await response.Content.ReadAsStringAsync();
                             // Deserialize into the List<User>
-                            var contacts = JsonSerializer.Deserialize<List<User>>(jsonResponse, new JsonSerializerOptions
+                            var apiResponse = JsonSerializer.Deserialize<ApiResponse>(jsonResponse, new JsonSerializerOptions
                             {
                                 PropertyNameCaseInsensitive = true
                             });
-
+                            var contacts = apiResponse?.Content;
                             if (contacts != null && contacts.Count > 0)
                             {
                                 apiUsers.AddRange(contacts); // Add all contacts to apiUsers
