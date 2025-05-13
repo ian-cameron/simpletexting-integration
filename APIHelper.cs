@@ -32,8 +32,7 @@ namespace SimpletextingAPI.Services
                         if (response.IsSuccessStatusCode)
                         {
                             var jsonResponse = await response.Content.ReadAsStringAsync();
-                            // Deserialize into the List<User>
-                            var apiResponse = JsonSerializer.Deserialize<ApiResponse>(jsonResponse, new JsonSerializerOptions
+                            var apiResponse = JsonSerializer.Deserialize<UserApiResponse>(jsonResponse, new JsonSerializerOptions
                             {
                                 PropertyNameCaseInsensitive = true
                             });
@@ -76,7 +75,69 @@ namespace SimpletextingAPI.Services
 
             return apiUsers;
         }
+        public static async Task<List<ContactList>> FetchApiContactLists(string apiKey)
+        {
+            List<ContactList> contactLists = new List<ContactList>();
+            string url = "https://api-app2.simpletexting.com/v2/api/contact-lists?page=0&size=100";
 
+            using (HttpClient client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+
+                int page = 0;
+                bool moreResults = true;
+
+                while (moreResults)
+                {
+                    try
+                    {
+                        var response = await client.GetAsync(url.Replace("page=0", $"page={page}"));
+                        if (response.IsSuccessStatusCode)
+                        {
+                            var jsonResponse = await response.Content.ReadAsStringAsync();
+                            var apiResponse = JsonSerializer.Deserialize<ListApiResponse>(jsonResponse, new JsonSerializerOptions
+                            {
+                                PropertyNameCaseInsensitive = true
+                            });
+                            var lists = apiResponse?.Content;
+                            if (lists != null && lists.Count > 0)
+                            {
+                                contactLists.AddRange(lists); // Add all lists to contactLists
+                                moreResults = lists.Count == 100; // Check if we received the maximum size
+                            }
+                            else
+                            {
+                                moreResults = false;
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine($"API request failed: {response.ReasonPhrase}");
+                            moreResults = false; // Stop fetching if there is a failure
+                        }
+                    }
+                    catch (HttpRequestException httpEx)
+                    {
+                        Console.WriteLine($"HTTP request error: {httpEx.Message}");
+                        moreResults = false; // Stop fetching on HTTP error
+                    }
+                    catch (JsonException jsonEx)
+                    {
+                        Console.WriteLine($"JSON deserialization error: {jsonEx.Message}");
+                        moreResults = false; // Stop fetching on JSON error
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"An unexpected error occurred: {ex.Message}");
+                        moreResults = false; // Stop fetching on unexpected error
+                    }
+
+                    page++;
+                }
+            }
+
+            return contactLists;
+        }
         public static async Task RemoveUsers(string apiKey, List<User> users)
         {
             using (HttpClient client = new HttpClient())

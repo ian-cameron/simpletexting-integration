@@ -96,7 +96,8 @@ namespace SimpletextingAPI.Services
                 searcher.PropertiesToLoad.Add("mobile"); // MobilePhone
                 searcher.PropertiesToLoad.Add("givenName"); // FirstName
                 searcher.PropertiesToLoad.Add("sn"); // LastName
-                searcher.PropertiesToLoad.Add("mail"); // Emai
+                searcher.PropertiesToLoad.Add("mail"); // Email
+                searcher.PropertiesToLoad.Add("physicalDeliveryOfficeName"); // Office
                 SearchResultCollection results = searcher.FindAll();
                 foreach (SearchResult result in results)
                 {
@@ -112,12 +113,16 @@ namespace SimpletextingAPI.Services
                     var email = result.Properties["mail"].Count > 0 
                         ? result.Properties["mail"][0].ToString()?.ToLower() 
                         : null;
+                    var office = result.Properties["physicalDeliveryOfficeName"].Count > 0
+                        ? result.Properties["physicalDeliveryOfficeName"][0].ToString()
+                        : null;
                     users.Add(new User
                     {
                         ContactPhone = contactPhone,
                         FirstName = firstName,
                         LastName = lastName,
-                        Email = email
+                        Email = email,
+                        Office = office
                     });
                 }
             }
