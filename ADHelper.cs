@@ -92,7 +92,8 @@ namespace SimpletextingAPI.Services
             List<User> users = new List<User>();
             using (DirectorySearcher searcher = new DirectorySearcher(entry))
             {
-                searcher.Filter = "(objectClass=user)";
+                // Filter for user objects where the account is enabled
+                searcher.Filter = "(&(objectClass=user)(!(userAccountControl:1.2.840.113556.1.4.803:=2)))";
                 searcher.PropertiesToLoad.Add("mobile"); // MobilePhone
                 searcher.PropertiesToLoad.Add("givenName"); // FirstName
                 searcher.PropertiesToLoad.Add("sn"); // LastName
