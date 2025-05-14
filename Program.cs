@@ -66,6 +66,9 @@ List<User> apiUsers = await ApiHelper.FetchApiUsers(apiKey!);
 // Discover available lists from users
 List<ContactList> lists = await ApiHelper.FetchApiContactLists(apiKey!);
 
+// Add any non-existant lists
+var newLists = lists.Where(l => !adUsers.Select(u => u.Office).ToList().Distinct().Contains(l.Name));
+
 // New users, or users with changed names,  emails or office names
 List<User> usersToUpsert = adUsers
     .Where(ad => !apiUsers.Any(api => api.ContactPhone == ad.ContactPhone) ||
