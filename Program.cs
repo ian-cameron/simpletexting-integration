@@ -14,7 +14,8 @@ var domain = configuration["Domain"];
 var username = configuration["Username"];
 var password = configuration["Password"];
 var ou = configuration["OU"] ?? $"OU=Users,DC=${domain},DC=com";
-var apiKey = configuration["ApiKey"];
+var apiKey = configuration["ApiKey"] ?? "";
+bool dryRun = Boolean.Parse(configuration["DryRun"] ?? "True");
 var allUserListIds = configuration.GetSection("ListIds").Get<List<string>>();
 
 if (Utils.IsBlank(apiKey))
@@ -41,6 +42,11 @@ if (Utils.IsBlank(username) && !Utils.IsBlank(password) || Utils.IsBlank(passwor
     Console.WriteLine($"Must supply a {(Utils.IsBlank(password) ? "password" : "username")}.");
 }
 
+if (dryRun)
+{
+    Console.WriteLine("Starting a DRY RUN. Nothing will be written to the API.");
+}
+
 // Fetch Active Directory users
 List<User> adUsers = [];
 if (Utils.IsBlank(domainController))
@@ -58,29 +64,64 @@ else
 {
     adUsers = AdHelper.FetchAdUsers(domainController, username!, password!, ou);
 }
+adUsers = adUsers.Where(u => !Utils.IsBlank(u.ContactPhone)).ToList();
+adUsers.ForEach(u => u.ListNames = Utils.IsBlank(u.Office) ? allUserListIds : allUserListIds.Union(new List<string>() { u.Office! }).ToList() );
+Console.WriteLine($"Found {adUsers.Count} existing enabled users with mobile numbers in Active Directory.");
 
 
 // Fetch SimpleTexting users
-List<User> apiUsers = await ApiHelper.FetchApiUsers(apiKey!);
+List<User> apiUsers = await ApiHelper.FetchApiUsers(apiKey);
+apiUsers.ForEach(u => u.ListNames = u.Lists.Select(l => l.Name).ToList());
+Console.WriteLine($"Found {apiUsers.Count} existing contacts in SimpleTexting.");
 
 // Discover available lists from users
-List<ContactList> lists = await ApiHelper.FetchApiContactLists(apiKey!);
+List<ContactList> lists = await ApiHelper.FetchApiContactLists(apiKey);
+Console.WriteLine($"Found {lists.Count} existing lists in SimpleTexting.");
 
 // Add any non-existant lists
-var newLists = lists.Where(l => !adUsers.Select(u => u.Office).ToList().Distinct().Contains(l.Name));
+var newLists = lists.Where(l => !adUsers.Select(u => u.Office).ToList().Distinct().Contains(l.Name)).ToList();
+if (newLists.Count > 0)
+{
+    Console.WriteLine($"Found {newLists.Count} distinct offices from AD Users that do not match up with a list from SimpleTexting to be added:");
+    newLists.ForEach(l => Console.WriteLine(l.Name));
+}
 
-// New users, or users with changed names,  emails or office names
-List<User> usersToUpsert = adUsers
-    .Where(ad => !apiUsers.Any(api => api.ContactPhone == ad.ContactPhone) ||
-              apiUsers.Any(api => api.ContactPhone == ad.ContactPhone &&
-             (api.FirstName != ad.FirstName || api.LastName != ad.LastName || api.Email != ad.Email || !api.Lists.Select(l=> l.Name).Contains(ad.Office)))
-          ).ToList();
+// New users
+var usersToAdd = adUsers.Where(ad => !apiUsers.Any(api => api.ContactPhone == ad.ContactPhone)).ToList();
+if (usersToAdd.Count > 0)
+{
+    Console.WriteLine($"Found {usersToAdd.Count} new users not in SimpleTexting to be added:");
+    usersToAdd.ForEach(u => Console.WriteLine($"{u.FirstName} {u.LastName} ({u.Office}): {u.ContactPhone}"));
+}
+
+// Removed users
+List<User> usersRemoved = apiUsers.Where(api => !adUsers.Any(ad => ad.ContactPhone == api.ContactPhone)).ToList();
+if (usersRemoved.Count > 0)
+{
+    Console.WriteLine($"Found {usersRemoved.Count} users in SimpleTexting no longer active in AD or no longer matching a mobile number to be removed:");
+    usersRemoved.ForEach(u => Console.WriteLine($"{u.FirstName} {u.LastName} ({u.ListString}): {u.ContactPhone}"));
+}
+
+// Users with updated name or new office
+var usersToUpdate = adUsers.Where(ad =>  
+    apiUsers.Any(api => api.ContactPhone == ad.ContactPhone &&
+    (api.FirstName != ad.FirstName || api.LastName != ad.LastName || !Utils.IsBlank(ad.Office) && !api.ListNames.Contains(ad.Office!)))).ToList();
+if (usersToUpdate.Count > 0)
+{
+    Console.WriteLine($"Found {usersToUpdate.Count} existing users with different Names or Offices in AD than SimpleTexting to be updated:");
+    foreach (var uu in usersToUpdate)
+    {
+        var old = apiUsers.Where(u => u.ContactPhone == uu.ContactPhone).First();
+        Console.WriteLine($"{old.FirstName} {old.LastName} ({old.ListString}) -> {uu.FirstName} {uu.LastName} ({uu.ListString})");
+    }
+}
+
+var usersToUpsert = usersToAdd.Union(usersToUpdate).ToList();
 
 // Add users to office
-usersToUpsert.ForEach(user => { user.ListIds = allUserListIds.Union(lists.Where(l => l.Name == user.Office).Select(l => l.ListId)).ToList(); });
+usersToUpsert.ForEach(user => { user.ListNames = allUserListIds.Union(lists.Where(l => l.Name == user.Office).Select(l => l.Name)).ToList(); });
 
-// API Users with phone numbers not found in AD
-List<User> usersRemoved = apiUsers.Where(api => !adUsers.Any(ad => ad.ContactPhone == api.ContactPhone)).ToList();
+
 
 // Print AD users
 Console.WriteLine("Active Directory Users:");
@@ -95,4 +136,3 @@ foreach (var apiUser in apiUsers)
 {
     Console.WriteLine($"Name: {apiUser.FirstName} {apiUser.LastName}, Email: {apiUser.Email}, Phone: {apiUser.ContactPhone}");
 }
-

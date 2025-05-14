@@ -9,7 +9,15 @@ namespace SimpletextingAPI.Models {
         public string? Email { get; set; }
         public string? Office { get;set; }
         public List<ContactList> Lists { get; set; } = new List<ContactList>();
-        public List<string> ListIds { get; set; } = new List<string>();
+        public List<string> ListNames { get; set; } = new List<string>();
+
+        public string ListString
+        {
+            get
+            {
+                return string.Join(",", ListNames.OrderBy(x => x));
+            }
+        }
     }
 
     public class ContactList
