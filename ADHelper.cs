@@ -122,7 +122,6 @@ namespace SimpletextingAPI.Services
                         ContactPhone = contactPhone,
                         FirstName = firstName,
                         LastName = lastName,
-                        Email = email,
                         Office = office
                     });
                 }

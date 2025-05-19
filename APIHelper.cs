@@ -143,9 +143,8 @@ namespace SimpletextingAPI.Services
                         {
                             FirstName = user.FirstName,
                             LastName = user.LastName,
-                            Email = user.Email,
                             ContactPhone = user.ContactPhone,
-                            ListIds = lists
+                            ListIds = user.ListNames
                         };
 
                         var json = JsonSerializer.Serialize(requestBody);

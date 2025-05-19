@@ -6,7 +6,6 @@ namespace SimpletextingAPI.Models {
         public string? ContactPhone { get; set; }
         public string? FirstName { get; set; }
         public string? LastName { get; set; }
-        public string? Email { get; set; }
         public string? Office { get;set; }
         public List<ContactList> Lists { get; set; } = new List<ContactList>();
         public List<string> ListNames { get; set; } = new List<string>();

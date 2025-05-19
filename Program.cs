@@ -91,7 +91,7 @@ var usersToAdd = adUsers.Where(ad => !apiUsers.Any(api => api.ContactPhone == ad
 if (usersToAdd.Count > 0)
 {
     Console.WriteLine($"Found {usersToAdd.Count} new users not in SimpleTexting to be added:");
-    usersToAdd.ForEach(u => Console.WriteLine($"{u.FirstName} {u.LastName} ({u.Office}): {u.ContactPhone}"));
+    usersToAdd.OrderBy(u => u.LastName).ToList().ForEach(u => Console.WriteLine($"{u.FirstName} {u.LastName} ({u.Office}): {u.ContactPhone}"));
 }
 
 // Removed users
@@ -99,7 +99,7 @@ List<User> usersRemoved = apiUsers.Where(api => !adUsers.Any(ad => ad.ContactPho
 if (usersRemoved.Count > 0)
 {
     Console.WriteLine($"Found {usersRemoved.Count} users in SimpleTexting no longer active in AD or no longer matching a mobile number to be removed:");
-    usersRemoved.ForEach(u => Console.WriteLine($"{u.FirstName} {u.LastName} ({u.ListString}): {u.ContactPhone}"));
+    usersRemoved.OrderBy(u => u.LastName).ToList().ForEach(u => Console.WriteLine($"{u.FirstName} {u.LastName} ({u.ListString}): {u.ContactPhone}"));
 }
 
 // Users with updated name or new office
@@ -109,7 +109,7 @@ var usersToUpdate = adUsers.Where(ad =>
 if (usersToUpdate.Count > 0)
 {
     Console.WriteLine($"Found {usersToUpdate.Count} existing users with different Names or Offices in AD than SimpleTexting to be updated:");
-    foreach (var uu in usersToUpdate)
+    foreach (var uu in usersToUpdate.OrderBy(u => u.LastName))
     {
         var old = apiUsers.Where(u => u.ContactPhone == uu.ContactPhone).First();
         Console.WriteLine($"{old.FirstName} {old.LastName} ({old.ListString}) -> {uu.FirstName} {uu.LastName} ({uu.ListString})");
@@ -124,15 +124,15 @@ usersToUpsert.ForEach(user => { user.ListNames = allUserListIds.Union(lists.Wher
 
 
 // Print AD users
-Console.WriteLine("Active Directory Users:");
-foreach (var userObj in adUsers)
+Console.WriteLine("\nActive Directory Users:");
+foreach (var userObj in adUsers.OrderBy(u => u.LastName))
 {
-    Console.WriteLine($"Name: {userObj.FirstName} {userObj.LastName}, Email: {userObj.Email}, Phone: {userObj.ContactPhone}");
+    Console.WriteLine($"Name: {userObj.FirstName} {userObj.LastName}, Phone: {userObj.ContactPhone}");
 }
 
 // Print SimpleTexting users
 Console.WriteLine("\nSimpleTexting Users:");
-foreach (var apiUser in apiUsers)
+foreach (var apiUser in apiUsers.OrderBy(u => u.LastName))
 {
-    Console.WriteLine($"Name: {apiUser.FirstName} {apiUser.LastName}, Email: {apiUser.Email}, Phone: {apiUser.ContactPhone}");
+    Console.WriteLine($"Name: {apiUser.FirstName} {apiUser.LastName}, Phone: {apiUser.ContactPhone}");
 }
