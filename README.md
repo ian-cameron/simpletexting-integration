@@ -27,7 +27,7 @@
 | DC  | `dc001.example.internal` | Hostname of preferred Domain Controller, you'll need this if running from a machine thats not a member of the domain  | :x:  |
 | Username  |`ad_reader`| An account name with permissions on the AD, otherwise if will run under the context of your logged in user which is usually enough  |:x:  |
 | Password  |`@p@5s\/\/0rD`| Only applicable when a Username is specified  | :x: |
-| OU  | `OU=Example Users,DC=example,DC=com`|Organizational Unit where to sync users from, eg)   | :x: |
+| OU  | `OU=Example Users,DC=example,DC=com`|Organizational Unit specified in a X.500/LDAP DIT format of where user objects are to be read from.  It will default to "OU=Users,DC={Domain.Replace(".",",DC=")}" if omitted. | :x: |
 | ApiKey  |`507f191e810c19729de860ea`| SimpleTexting API Token. Your API token can be found under [settings](https://app2.simpletexting.com/integrations/webhooks), used as the token in the request header Authorization: Bearer <token>  | :heavy_check_mark:  |
 | DryRun  |`true`| Do not write to API, just log actions to console. Default is true, so to run you have to specify 'false'  | :x:  |
 | listIds  |`["All Employees", "AD Users"]`| Contact Lists (both Name or listId props are supported), as a JSON Array which to add all users to  | :heavy_check_mark: |

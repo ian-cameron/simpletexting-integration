@@ -10,10 +10,10 @@ var configuration = new ConfigurationBuilder()
                 .Build();
 
 var domainController = configuration["DC"] ?? "";
-var domain = configuration["Domain"];
+var domain = configuration["Domain"] ?? "";
 var username = configuration["Username"];
 var password = configuration["Password"];
-var ou = configuration["OU"] ?? $"OU=Users,DC=${domain},DC=com";
+var ou = configuration["OU"] ?? $"OU=Users,DC={domain.Replace(".",",DC=")}";
 var apiKey = configuration["ApiKey"] ?? "";
 bool dryRun = Boolean.Parse(configuration["DryRun"] ?? "True");
 var allUserListIds = configuration.GetSection("ListIds").Get<List<string>>();
