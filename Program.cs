@@ -32,7 +32,7 @@ if (allUserListIds == null || !allUserListIds.Any())
 
 if (Utils.IsBlank(domain))
 {
-    Console.WriteLine("Must specify and AD domain");
+    Console.WriteLine("Must specify an AD domain");
     return;
 }
 
