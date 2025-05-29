@@ -129,7 +129,49 @@ namespace SimpletextingAPI.Services
             }
         }
 
-        public static async Task UpsertUsers(string apiKey, List<User> users, List<string> lists)
+        public static async Task CreateLists(string apiKey, List<string> lists)
+        {
+            using (HttpClient client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+
+                foreach (var list in lists)
+                {
+                    try
+                    {
+                        var requestBody = new
+                        {
+                           Name = list
+                        };
+
+                        var json = JsonSerializer.Serialize(requestBody);
+                        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                        // Make the POST request
+                        var response = await client.PostAsync("https://api-app2.simpletexting.com/v2/api/contacts?listsReplacement=false", content);
+
+                        if (response.IsSuccessStatusCode)
+                        {
+                            Console.WriteLine($"Successfully added list: {list}");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Failed to add list: {list}. Reason: {response.ReasonPhrase}");
+                        }
+                    }
+                    catch (HttpRequestException httpEx)
+                    {
+                        Console.WriteLine($"HTTP request error while adding list: {list}. Error: {httpEx.Message}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"An unexpected error occurred while adding list: {list}. Error: {ex.Message}");
+                    }
+                }
+            }
+        }
+
+        public static async Task UpsertUsers(string apiKey, List<User> users)
         {
             using (HttpClient client = new HttpClient())
             {
