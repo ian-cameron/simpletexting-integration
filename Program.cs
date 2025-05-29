@@ -16,6 +16,7 @@ var password = configuration["Password"];
 var ou = configuration["OU"] ?? $"OU=Users,DC={domain.Replace(".",",DC=")}";
 var apiKey = configuration["ApiKey"] ?? "";
 bool dryRun = Boolean.Parse(configuration["DryRun"] ?? "True");
+bool debugMode = Boolean.Parse(configuration["Debug"] ?? "False");
 var allUserListIds = configuration.GetSection("ListIds").Get<List<string>>();
 
 if (Utils.IsBlank(apiKey))
@@ -79,11 +80,12 @@ List<ContactList> lists = await ApiHelper.FetchApiContactLists(apiKey);
 Console.WriteLine($"Found {lists.Count} existing lists in SimpleTexting.");
 
 // Add any non-existant lists
-var newLists = lists.Where(l => !adUsers.Select(u => u.Office).ToList().Distinct().Contains(l.Name)).ToList();
+var adLists = adUsers.Select(u => u.Office).ToList().Distinct();
+List<string> newLists = [.. adLists.Where(al => !lists.Select(l => l.Name).ToList().Distinct().Contains(al))];
 if (newLists.Count > 0)
 {
     Console.WriteLine($"Found {newLists.Count} distinct offices from AD Users that do not match up with a list from SimpleTexting to be added:");
-    newLists.ForEach(l => Console.WriteLine(l.Name));
+    Console.WriteLine(string.Join("\n", newLists));
 }
 
 // New users
@@ -122,17 +124,27 @@ var usersToUpsert = usersToAdd.Union(usersToUpdate).ToList();
 usersToUpsert.ForEach(user => { user.ListNames = allUserListIds.Union(lists.Where(l => l.Name == user.Office).Select(l => l.Name)).ToList(); });
 
 
-
-// Print AD users
-Console.WriteLine("\nActive Directory Users:");
-foreach (var userObj in adUsers.OrderBy(u => u.LastName))
+if (debugMode)
 {
-    Console.WriteLine($"Name: {userObj.FirstName} {userObj.LastName}, Phone: {userObj.ContactPhone}");
+    // Print AD users
+    Console.WriteLine("\nActive Directory Users:");
+    foreach (var userObj in adUsers.OrderBy(u => u.LastName))
+    {
+        Console.WriteLine($"Name: {userObj.FirstName} {userObj.LastName}, Phone: {userObj.ContactPhone}");
+    }
+
+    // Print SimpleTexting users
+    Console.WriteLine("\nSimpleTexting Users:");
+    foreach (var apiUser in apiUsers.OrderBy(u => u.LastName))
+    {
+        Console.WriteLine($"Name: {apiUser.FirstName} {apiUser.LastName}, Phone: {apiUser.ContactPhone}");
+    }
 }
 
-// Print SimpleTexting users
-Console.WriteLine("\nSimpleTexting Users:");
-foreach (var apiUser in apiUsers.OrderBy(u => u.LastName))
+// Write to the API
+if (!dryRun)
 {
-    Console.WriteLine($"Name: {apiUser.FirstName} {apiUser.LastName}, Phone: {apiUser.ContactPhone}");
+    await ApiHelper.CreateLists(apiKey, newLists);
+    await ApiHelper.RemoveUsers(apiKey, usersRemoved);
+    await ApiHelper.UpsertUsers(apiKey, usersToUpsert);
 }
