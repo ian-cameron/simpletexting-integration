@@ -3,11 +3,17 @@ using SimpletextingAPI.Services;
 using SimpletextingAPI.Models;
 using System.Linq;
 using SimpletextingAPI;
+
 // Load configuration
-var configuration = new ConfigurationBuilder()
+var configurationBuilder = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json")
-                .Build();
+                .AddJsonFile("appsettings.json");
+#if DEBUG
+if (File.Exists("appsettings.Development.json"))
+    configurationBuilder.AddJsonFile("appsettings.Development.json");
+#endif
+
+var configuration = configurationBuilder.Build();
 
 var domainController = configuration["DC"] ?? "";
 var domain = configuration["Domain"] ?? "";
