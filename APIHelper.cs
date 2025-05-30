@@ -37,7 +37,7 @@ namespace SimpletextingAPI.Services
                                 PropertyNameCaseInsensitive = true
                             };
                             var jsonResponse = await response.Content.ReadAsStringAsync();
-                            ApiResponse<TItem> apiResponse = JsonSerializer.Deserialize<ApiResponse<TItem>>(jsonResponse, jsonOptions);
+                            var apiResponse = JsonSerializer.Deserialize<ApiResponse<TItem>>(jsonResponse, jsonOptions);
 
                             var items = getContent(apiResponse ?? new ApiResponse<TItem>());
                             if (items != null && items.Count > 0)
