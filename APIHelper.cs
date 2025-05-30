@@ -12,7 +12,7 @@ namespace SimpletextingAPI.Services
 {
     public static class ApiHelper
     {
-        private static async Task<List<TItem>> FetchPaginatedApiData<TResponse, TItem>(string apiKey, string baseUrl, Func<TResponse, List<TItem>> getContent) where TResponse : class
+        private static async Task<List<TItem>> FetchPaginatedApiData<TItem>(string apiKey, string baseUrl, Func<ApiResponse<TItem>, List<TItem>> getContent)
         {
             var results = new List<TItem>();
 
@@ -32,13 +32,14 @@ namespace SimpletextingAPI.Services
 
                         if (response.IsSuccessStatusCode)
                         {
-                            var jsonResponse = await response.Content.ReadAsStringAsync();
-                            var apiResponse = JsonSerializer.Deserialize<TResponse>(jsonResponse, new JsonSerializerOptions
+                            var jsonOptions = new JsonSerializerOptions
                             {
                                 PropertyNameCaseInsensitive = true
-                            });
+                            };
+                            var jsonResponse = await response.Content.ReadAsStringAsync();
+                            ApiResponse<TItem> apiResponse = JsonSerializer.Deserialize<ApiResponse<TItem>>(jsonResponse, jsonOptions);
 
-                            var items = getContent(apiResponse);
+                            var items = getContent(apiResponse ?? new ApiResponse<TItem>());
                             if (items != null && items.Count > 0)
                             {
                                 results.AddRange(items);
@@ -81,19 +82,19 @@ namespace SimpletextingAPI.Services
         public static Task<List<User>> FetchApiUsers(string apiKey)
         {
             string url = "https://api-app2.simpletexting.com/v2/api/contacts?page=0&size=100";
-            return FetchPaginatedApiData<UserApiResponse, User>(
+            return FetchPaginatedApiData<User>(
                 apiKey,
                 url,
-                response => response?.Content);
+                response => response.Content ?? []);
         }
 
         public static Task<List<ContactList>> FetchApiContactLists(string apiKey)
         {
             string url = "https://api-app2.simpletexting.com/v2/api/contact-lists?page=0&size=100";
-            return FetchPaginatedApiData<ListApiResponse, ContactList>(
+            return FetchPaginatedApiData<ContactList>(
                 apiKey,
                 url,
-                response => response?.Content);
+                response => response.Content ?? []);
         }
         public static async Task RemoveUsers(string apiKey, List<User> users)
         {

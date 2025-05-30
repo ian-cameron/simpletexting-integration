@@ -30,15 +30,9 @@ namespace SimpletextingAPI.Models {
         public required string Name { get; set; }
     }
 
-    public class UserApiResponse
+    public class ApiResponse<T>
     {
-        public List<User>? Content { get; set; }
-        public int TotalPages { get; set; }
-        public long TotalElements { get; set; }
-    }
-    public class ListApiResponse
-    {
-        public List<ContactList>? Content { get; set; }
+        public List<T>? Content { get; set; }
         public int TotalPages { get; set; }
         public long TotalElements { get; set; }
     }
