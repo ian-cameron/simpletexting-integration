@@ -15,7 +15,7 @@
  * We assume there is a SimpleTexting group name that matches each distinct Office name.
    * Users will be added to the contact list that matches their Office.
    * Users will be added to all lists specifed in the configuration file value for `listIds`
-   * Users will not be removed from any other contact lists
+   * Users will be removed from any other contact lists
    * Unmatched contacts (by `mobile`) from SimpleTexting who are not found in Active Directory will be removed.
 
 ## Configuration
