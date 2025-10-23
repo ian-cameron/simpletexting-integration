@@ -149,12 +149,12 @@ if (debugMode)
 // Write to the API
 if (!dryRun)
 {
- //   Console.WriteLine($"Adding {newLists.Count} new lists");
+    Console.WriteLine($"Adding {newLists.Count} new lists");
     await ApiHelper.CreateLists(apiKey, newLists);
- //   Console.WriteLine($"Removing {usersRemoved.Count} phone numbers (users).");
- //   await ApiHelper.RemoveUsers(apiKey, usersRemoved.Take(1).ToList());
+    Console.WriteLine($"Removing {usersRemoved.Count} phone numbers (users).");
+    await ApiHelper.RemoveUsers(apiKey, usersRemoved);
     Console.WriteLine($"Updating {usersToUpdate.Count} existing users");
-    await ApiHelper.UpdateUsers(apiKey, usersToUpdate.Take(1).ToList());
+    await ApiHelper.UpdateUsers(apiKey, usersToUpdate);
     Console.WriteLine($"Adding {usersToAdd.Count} new users");
-    await ApiHelper.AddUsers(apiKey, usersToAdd.Take(1).ToList());
+    await ApiHelper.AddUsers(apiKey, usersToAdd);
 }
