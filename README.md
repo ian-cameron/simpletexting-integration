@@ -42,3 +42,10 @@ This tool is a console app meant to be run on a CLI or in a script.  There are n
 This appends output to a log file `SimpleTextingSync.log`.  
 
 By default the tool runs with under the user's domain context.  As such, the configuration values for domain, username, and password are optional and can be provided by the environment.  The Windows Scheduled Task Manager can store "Run As" user credentials as well.
+
+## Notes
+**Unsubscribed** Contacts Cannot Be Deleted via API
+>SimpleTexting prevents deletion of contacts who have unsubscribed to comply with anti-spam regulations and preserve historical messaging data.
+Attempting a DELETE request on an unsubscribed contact triggers a 409 Conflict: the API is intentionally blocking a deletion that could otherwise violate policies or reporting consistency.
+
+The logs will display `Failed removing user: {Name}, Phone {phone}. Status: Conflict` because of this.  You may be able to remove these users through the SimpleTexting web API, but only do that if you're sure they won't get inadvertendly re-added.  Since they've specified they do not want to be on your texting list, it would be putting you out of complicance of CAN-SPAM act or SimpleTexting platform terms of service if you do not honor that request.
