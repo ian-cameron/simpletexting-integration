@@ -124,10 +124,9 @@ if (usersToUpdate.Count > 0)
     }
 }
 
-var usersToUpsert = usersToAdd.Union(usersToUpdate).ToList();
-
-// Add users to office
-usersToUpsert.ForEach(user => { user.ListNames = allUserListIds.Union(lists.Where(l => l.Name == user.Office).Select(l => l.Name)).ToList(); });
+// Add list names to each user
+usersToAdd.ForEach(user => { user.ListNames = allUserListIds.Union(lists.Where(l => l.Name == user.Office).Select(l => l.Name)).ToList(); });
+usersToUpdate.ForEach(user => { user.ListNames = allUserListIds.Union(lists.Where(l => l.Name == user.Office).Select(l => l.Name)).ToList(); });
 
 
 if (debugMode)
@@ -150,7 +149,12 @@ if (debugMode)
 // Write to the API
 if (!dryRun)
 {
+ //   Console.WriteLine($"Adding {newLists.Count} new lists");
     await ApiHelper.CreateLists(apiKey, newLists);
-    await ApiHelper.RemoveUsers(apiKey, usersRemoved);
-    await ApiHelper.UpsertUsers(apiKey, usersToUpsert);
+ //   Console.WriteLine($"Removing {usersRemoved.Count} phone numbers (users).");
+ //   await ApiHelper.RemoveUsers(apiKey, usersRemoved.Take(1).ToList());
+    Console.WriteLine($"Updating {usersToUpdate.Count} existing users");
+    await ApiHelper.UpdateUsers(apiKey, usersToUpdate.Take(1).ToList());
+    Console.WriteLine($"Adding {usersToAdd.Count} new users");
+    await ApiHelper.AddUsers(apiKey, usersToAdd.Take(1).ToList());
 }

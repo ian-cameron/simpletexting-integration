@@ -107,7 +107,7 @@ namespace SimpletextingAPI.Services
                     try
                     {
                         var phoneNumber = user.ContactPhone;
-                        var response = await client.DeleteAsync($"https://api-app2.simpletexting.com/v2/api/webhooks/{phoneNumber}");
+                        var response = await client.DeleteAsync($"https://api-app2.simpletexting.com/v2/api/contacts/{phoneNumber}");
 
                         if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
                         {
@@ -142,14 +142,14 @@ namespace SimpletextingAPI.Services
                     {
                         var requestBody = new
                         {
-                           Name = list
+                           name = list
                         };
 
                         var json = JsonSerializer.Serialize(requestBody);
                         var content = new StringContent(json, Encoding.UTF8, "application/json");
 
                         // Make the POST request
-                        var response = await client.PostAsync("https://api-app2.simpletexting.com/v2/api/contacts?listsReplacement=false", content);
+                        var response = await client.PostAsync("https://api-app2.simpletexting.com/v2/api/contact-lists", content);
 
                         if (response.IsSuccessStatusCode)
                         {
@@ -172,7 +172,7 @@ namespace SimpletextingAPI.Services
             }
         }
 
-        public static async Task UpsertUsers(string apiKey, List<User> users)
+        public static async Task UpdateUsers(string apiKey, List<User> users)
         {
             using (HttpClient client = new HttpClient())
             {
@@ -184,34 +184,79 @@ namespace SimpletextingAPI.Services
                     {
                         var requestBody = new
                         {
-                            FirstName = user.FirstName,
-                            LastName = user.LastName,
-                            ContactPhone = user.ContactPhone,
-                            ListIds = user.ListNames
+                            firstName = user.FirstName,
+                            lastName = user.LastName,
+                            contactPhone = user.ContactPhone,
+                            listIds = user.ListNames
+                        };
+
+                        var json = JsonSerializer.Serialize(requestBody);
+                        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                        // Make the PUT request
+                        var response = await client.PutAsync($"https://api-app2.simpletexting.com/v2/api/contacts/{user.ContactPhone}?upsert=true&listsReplacement=true", content);
+
+                        if (response.IsSuccessStatusCode)
+                        {
+                            Console.WriteLine($"Successfully updated user: {user.FirstName} {user.LastName}, Phone: {user.ContactPhone}");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Failed to updated user: {user.FirstName} {user.LastName}, Phone: {user.ContactPhone}. Reason: {response.ReasonPhrase}");
+                        }
+                    }
+                    catch (HttpRequestException httpEx)
+                    {
+                        Console.WriteLine($"HTTP request error while updating user: {user.FirstName} {user.LastName}, Phone: {user.ContactPhone}. Error: {httpEx.Message}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"An unexpected error occurred while updating user: {user.FirstName} {user.LastName}, Phone: {user.ContactPhone}. Error: {ex.Message}");
+                    }
+                }
+            }
+        }
+
+        public static async Task AddUsers(string apiKey, List<User> users)
+        {
+            using (HttpClient client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+
+                foreach (var user in users)
+                {
+                    try
+                    {
+                        var requestBody = new
+                        {
+                            firstName = user.FirstName,
+                            lastName = user.LastName,
+                            contactPhone = user.ContactPhone,
+                            listIds = user.ListNames
                         };
 
                         var json = JsonSerializer.Serialize(requestBody);
                         var content = new StringContent(json, Encoding.UTF8, "application/json");
 
                         // Make the POST request
-                        var response = await client.PostAsync("https://api-app2.simpletexting.com/v2/api/contacts?listsReplacement=false", content);
+                        var response = await client.PostAsync($"https://api-app2.simpletexting.com/v2/api/contacts", content);
 
                         if (response.IsSuccessStatusCode)
                         {
-                            Console.WriteLine($"Successfully upserted user: {user.FirstName} {user.LastName}, Phone: {user.ContactPhone}");
+                            Console.WriteLine($"Successfully added user: {user.FirstName} {user.LastName}, Phone: {user.ContactPhone}");
                         }
                         else
                         {
-                            Console.WriteLine($"Failed to upsert user: {user.FirstName} {user.LastName}, Phone: {user.ContactPhone}. Reason: {response.ReasonPhrase}");
+                            Console.WriteLine($"Failed to add user: {user.FirstName} {user.LastName}, Phone: {user.ContactPhone}. Reason: {response.ReasonPhrase}");
                         }
                     }
                     catch (HttpRequestException httpEx)
                     {
-                        Console.WriteLine($"HTTP request error while upserting user: {user.FirstName} {user.LastName}, Phone: {user.ContactPhone}. Error: {httpEx.Message}");
+                        Console.WriteLine($"HTTP request error while adding user: {user.FirstName} {user.LastName}, Phone: {user.ContactPhone}. Error: {httpEx.Message}");
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"An unexpected error occurred while upserting user: {user.FirstName} {user.LastName}, Phone: {user.ContactPhone}. Error: {ex.Message}");
+                        Console.WriteLine($"An unexpected error occurred while adding user: {user.FirstName} {user.LastName}, Phone: {user.ContactPhone}. Error: {ex.Message}");
                     }
                 }
             }
